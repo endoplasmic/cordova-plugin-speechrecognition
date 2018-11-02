@@ -10,6 +10,7 @@ import org.apache.cordova.PluginResult;
 
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import android.app.Activity;
 import android.content.Context;
@@ -28,6 +29,7 @@ import android.util.Log;
 import android.view.View;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
@@ -291,14 +293,20 @@ public class SpeechRecognition extends CordovaPlugin {
     @Override
     public void onPartialResults(Bundle bundle) {
       ArrayList<String> matches = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-      Log.d(LOG_TAG, "SpeechRecognitionListener partialResults: " + matches);
+      float[] scores = bundle.getFloatArray(SpeechRecognizer.CONFIDENCE_SCORES);
+      Log.d(LOG_TAG, "SpeechRecognitionListener partialResults: " + matches + " scores: " + Arrays.toString(scores));
       JSONArray matchesJSON = new JSONArray(matches);
+      JSONArray scoresJSON = new JSONArray(Arrays.asList(scores));
+      JSONObject msg = new JSONObject();
       try {
         if (matches != null
                 && matches.size() > 0
                         && !mLastPartialResults.equals(matchesJSON)) {
           mLastPartialResults = matchesJSON;
-          PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, matchesJSON);
+          msg.put("matches", matchesJSON);
+          msg.put("confidence", scoresJSON);
+          msg.put("complete", false);
+          PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, msg);
           pluginResult.setKeepCallback(true);
           callbackContext.sendPluginResult(pluginResult);
         }
@@ -316,10 +324,16 @@ public class SpeechRecognition extends CordovaPlugin {
     @Override
     public void onResults(Bundle results) {
       ArrayList<String> matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-      Log.d(LOG_TAG, "SpeechRecognitionListener results: " + matches);
+      float[] scores = results.getFloatArray(SpeechRecognizer.CONFIDENCE_SCORES);
+      Log.d(LOG_TAG, "SpeechRecognitionListener results: " + matches + " scores: " + Arrays.toString(scores));
       try {
-        JSONArray jsonMatches = new JSONArray(matches);
-        callbackContext.success(jsonMatches);
+        JSONArray matchesJSON = new JSONArray(matches);
+        JSONArray scoresJSON = new JSONArray(Arrays.asList(scores));
+        JSONObject msg = new JSONObject();
+        msg.put("matches", matchesJSON);
+        msg.put("confidence", scoresJSON);
+        msg.put("complete", true);
+        callbackContext.success(msg);
       } catch (Exception e) {
         e.printStackTrace();
         callbackContext.error(e.getMessage());
