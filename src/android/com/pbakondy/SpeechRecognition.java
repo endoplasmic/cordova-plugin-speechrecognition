@@ -319,6 +319,19 @@ public class SpeechRecognition extends CordovaPlugin {
     @Override
     public void onReadyForSpeech(Bundle params) {
       Log.d(LOG_TAG, "onReadyForSpeech");
+      JSONObject msg = new JSONObject();
+
+      try {
+        msg.put("matches", new JSONArray());
+        msg.put("confidence", new JSONArray());
+        msg.put("complete", false);
+        PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, msg);
+        pluginResult.setKeepCallback(true);
+        callbackContext.sendPluginResult(pluginResult);
+      } catch (Exception e) {
+        e.printStackTrace();
+        callbackContext.error(e.getMessage());
+      }
     }
 
     @Override
